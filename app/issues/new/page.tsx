@@ -1,8 +1,8 @@
-'use client'
+'use client';
 
-import { Button, Callout, Text, TextField } from '@radix-ui/themes'
-import SimpleMDE from "react-simplemde-editor";
-import "easymde/dist/easymde.min.css";
+import { Button, Callout, Text, TextField } from '@radix-ui/themes';
+import SimpleMDE from 'react-simplemde-editor';
+import 'easymde/dist/easymde.min.css';
 
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
@@ -15,8 +15,9 @@ import { z } from 'zod';
 
 import { createIssueSchema } from '@/app/createIssueSchema';
 import ErrorMessage from '@/app/components/ErrorMessage';
+import Spinner from '@/app/components/Spinner';
 
-type IssueForm = z.infer<typeof createIssueSchema>
+type IssueForm = z.infer<typeof createIssueSchema>;
 
 // interface IssueForm {
 //   title: string;
@@ -24,27 +25,35 @@ type IssueForm = z.infer<typeof createIssueSchema>
 // }
 
 const NewIssuePage = () => {
-  const { register, control, handleSubmit, formState: { errors } } = useForm<IssueForm>({
+  const {
+    register,
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<IssueForm>({
     resolver: zodResolver(createIssueSchema),
   });
   const router = useRouter();
   const [error, setError] = useState('');
+  const [isSubmitting, setSubmitting] = useState(false);
 
   return (
     <div className='max-w-xl'>
-      {error && <Callout.Root color='red' className='mb-3'>
-        <Callout.Text>
-          {error}
-        </Callout.Text>
-      </Callout.Root>}
+      {error && (
+        <Callout.Root color='red' className='mb-3'>
+          <Callout.Text>{error}</Callout.Text>
+        </Callout.Root>
+      )}
       <form
         className=' space-y-3'
         onSubmit={handleSubmit(async (data) => {
           try {
+            setSubmitting(true);
             await axios.post('/api/issues', data);
             router.push('/issues');
           } catch (error) {
-            console.log(error)
+            setSubmitting(false);
+            console.log(error);
             setError('An unexpected error occurred');
           }
         })}
@@ -54,13 +63,17 @@ const NewIssuePage = () => {
         <Controller
           name='description'
           control={control}
-          render={({ field }) => <SimpleMDE placeholder="Description" {...field} />}
+          render={({ field }) => (
+            <SimpleMDE placeholder='Description' {...field} />
+          )}
         />
         <ErrorMessage>{errors.description?.message}</ErrorMessage>
-        <Button>Submit New Issue</Button>
+        <Button disabled={isSubmitting}>
+          Submit New Issue {isSubmitting && <Spinner />}
+        </Button>
       </form>
     </div>
-  )
-}
+  );
+};
 
-export default NewIssuePage
+export default NewIssuePage;
